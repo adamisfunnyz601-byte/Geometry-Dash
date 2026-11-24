@@ -7,6 +7,7 @@ on:
     paths:
       - 'Enzonic-Geometry-Dash-Full-Frontend-Source.zip'
       - '.github/workflows/build-cadence.yml'
+      - '.github/build-trigger.txt'
 
 permissions:
   contents: read
