@@ -64,6 +64,59 @@ jobs:
             cp -R cadence-main/web/assets "$GITHUB_WORKSPACE/site-artifact/assets"
           fi
 
+
+      - name: Download and extract Geometry Dash Resources
+        timeout-minutes: 25
+        run: |
+          set -euo pipefail
+          git clone --depth 1 https://github.com/definitelynotguru/mf-dl.git "$RUNNER_TEMP/mf-dl"
+          python3 -m pip install --user requests
+          printf '%s\\n' 'https://www.mediafire.com/file/rtsqfba3veok2c2/Resources.zip/file' > "$RUNNER_TEMP/mediafire-links.txt"
+          python3 "$RUNNER_TEMP/mf-dl/mfdl.py" "$RUNNER_TEMP/mediafire-downloads" "$RUNNER_TEMP/mediafire-links.txt"
+          ZIP_FILE="$(find "$RUNNER_TEMP/mediafire-downloads" -type f -name 'Resources.zip' -print -quit)"
+          test -n "$ZIP_FILE"
+          unzip -tq "$ZIP_FILE"
+          mkdir -p "$RUNNER_TEMP/resources-unpacked"
+          unzip -q "$ZIP_FILE" -d "$RUNNER_TEMP/resources-unpacked"
+          RESOURCE_ROOT="$(find "$RUNNER_TEMP/resources-unpacked" -type f -path '*/levels/1.txt' -printf '%h\\n' | sed 's#/levels$##' | head -n 1)"
+          test -n "$RESOURCE_ROOT"
+          mkdir -p "$GITHUB_WORKSPACE/site-artifact/Resources"
+          cp -a "$RESOURCE_ROOT/." "$GITHUB_WORKSPACE/site-artifact/Resources/"
+          test -f "$GITHUB_WORKSPACE/site-artifact/Resources/levels/1.txt"
+          echo "Resources files: $(find "$GITHUB_WORKSPACE/site-artifact/Resources" -type f | wc -l)"
+          du -sh "$GITHUB_WORKSPACE/site-artifact/Resources"
+
+      - name: Configure automatic Resources loading
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("site-artifact/index.html")
+          s = p.read_text()
+          old = 'let source = null; // { read(path) -> Promise<Uint8Array|null> }'
+          new = """let source = {
+            read: async (p) => {
+              const r = await fetch(new URL("Resources/" + p, document.baseURI));
+              return r.ok ? new Uint8Array(await r.arrayBuffer()) : null;
+            }
+          }; // bundled Resources are loaded automatically
+          (async () => {
+            const check = await source.read("levels/1.txt");
+            if (check) {
+              status("Game resources loaded automatically. Choose a level and press Play.");
+              $("play").disabled = false;
+            } else {
+              status("The bundled Resources could not be loaded. Check the site deployment includes the Resources folder.", true);
+            }
+          })();"""
+          if old not in s:
+              raise SystemExit("Could not find Cadence resource source declaration")
+          s = s.replace(old, new, 1)
+          s = s.replace('Drop the Geometry Dash folder here, or choose it.', 'Game files are bundled with this website and load automatically.')
+          s = s.replace('Steam on Mac: right-click Geometry Dash in your library, Manage, Browse local files, then drop the app. On Windows, drop the Geometry Dash folder.', 'No folder selection is needed.')
+          s = s.replace('<button type="button" id="pick">Choose folder</button>', '<button type="button" id="pick" hidden>Choose folder</button>')
+          p.write_text(s)
+          PY
+
       - name: Upload playable website
         uses: actions/upload-artifact@v4
         with:
