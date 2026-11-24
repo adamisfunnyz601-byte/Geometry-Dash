@@ -1,0 +1,22 @@
+# Rust build output
+/target/
+**/target/
+
+# WASM build output
+/pkg/
+/web/pkg/
+
+# Local game resources and user data
+Resources/
+*.dat
+*.bak
+*.log
+.env
+.env.*
+!.env.example
+
+# Local tools and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
