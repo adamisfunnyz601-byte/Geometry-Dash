@@ -32,11 +32,15 @@ jobs:
         working-directory: ${{ runner.temp }}/cadence-source/cadence-main
         run: |
           cargo install wasm-bindgen-cli --version 0.2.130 --locked
-          ./tools/build-web.sh
+          bash ./tools/build-web.sh
 
       - name: Assemble website artifact
         working-directory: ${{ runner.temp }}/cadence-source
         run: |
+          test -f index.html
+          test -f site.js
+          test -f cadence-main/web/pkg/cadence_game.js
+          test -f cadence-main/web/pkg/cadence_game_bg.wasm
           mkdir -p "$GITHUB_WORKSPACE/site-artifact/pkg"
           cp index.html site.js "$GITHUB_WORKSPACE/site-artifact/"
           cp cadence-main/web/pkg/cadence_game.js cadence-main/web/pkg/cadence_game_bg.wasm "$GITHUB_WORKSPACE/site-artifact/pkg/"
