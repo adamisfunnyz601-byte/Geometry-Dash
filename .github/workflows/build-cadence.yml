@@ -70,9 +70,10 @@ jobs:
         run: |
           set -euo pipefail
           git clone --depth 1 https://github.com/definitelynotguru/mf-dl.git "$RUNNER_TEMP/mf-dl"
-          python3 -m pip install --user requests
+          python3 -m venv "$RUNNER_TEMP/mf-venv"
+          "$RUNNER_TEMP/mf-venv/bin/pip" install requests
           printf '%s\\n' 'https://www.mediafire.com/file/rtsqfba3veok2c2/Resources.zip/file' > "$RUNNER_TEMP/mediafire-links.txt"
-          python3 "$RUNNER_TEMP/mf-dl/mfdl.py" "$RUNNER_TEMP/mediafire-downloads" "$RUNNER_TEMP/mediafire-links.txt"
+          "$RUNNER_TEMP/mf-venv/bin/python" "$RUNNER_TEMP/mf-dl/mfdl.py" "$RUNNER_TEMP/mediafire-downloads" "$RUNNER_TEMP/mediafire-links.txt"
           ZIP_FILE="$(find "$RUNNER_TEMP/mediafire-downloads" -type f -name 'Resources.zip' -print -quit)"
           test -n "$ZIP_FILE"
           unzip -tq "$ZIP_FILE"
