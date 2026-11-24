@@ -23,6 +23,21 @@ jobs:
           mkdir -p "$RUNNER_TEMP/cadence-source"
           unzip -q Enzonic-Geometry-Dash-Full-Frontend-Source.zip -d "$RUNNER_TEMP/cadence-source"
 
+      - name: Inspect frontend entrypoint
+        working-directory: ${{ runner.temp }}/cadence-source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          for name in ("index.html", "site.js", "cadence-main/web/index.html"):
+              p = Path(name)
+              print(f"\\n===== {name} =====")
+              if p.exists():
+                  text = p.read_text(errors="replace")
+                  print(text[:18000])
+              else:
+                  print("MISSING")
+          PY
+
       - name: Install Rust and WebAssembly target
         uses: dtolnay/rust-toolchain@stable
         with:
