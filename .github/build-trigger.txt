@@ -1,0 +1,1 @@
+Inspect bundled frontend source before automatic game startup changes.
