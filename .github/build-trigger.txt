@@ -1,1 +1,1 @@
-Inspect bundled frontend source before automatic game startup changes.
+Download Resources from MediaFire, package them with Cadence, and auto-load them at startup. Build revision 2.
