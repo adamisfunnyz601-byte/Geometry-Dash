@@ -1,0 +1,14 @@
+name = "geometrydash-api-gateway"
+main = "relay/worker.js"
+compatibility_date = "2026-11-25"
+workers_dev = false
+
+# The Worker must be attached to the existing public website hostname.
+# Configure the Enzonic backend origin separately:
+#   npx wrangler secret put API_ORIGIN
+# Enter the Enzonic Node service origin (scheme + host, no /api suffix).
+routes = [
+  { pattern = "geometrydash.devs.li/api/*", zone_name = "devs.li" },
+  { pattern = "geometrydash.devs.li/relay/*", zone_name = "devs.li" },
+  { pattern = "geometrydash.devs.li/database/*", zone_name = "devs.li" }
+]
