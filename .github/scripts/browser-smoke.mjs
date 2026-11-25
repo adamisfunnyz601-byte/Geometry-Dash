@@ -12,7 +12,7 @@ try {
   if(!ready) throw new Error("Static test server did not start");
   const browser = await chromium.launch({headless:true});
   try {
-    for (const viewport of [{width:1280,height:800},{width:390,height:844}]) {
+    for (const viewport of [{width:1280,height:800},{width:700,height:900},{width:390,height:844}]) {
       const page = await browser.newPage({viewport, hasTouch: viewport.width < 500, isMobile: viewport.width < 500});
       const pageErrors=[];
       page.on("pageerror",e=>pageErrors.push(e.message));
@@ -30,6 +30,16 @@ try {
       if(await page.locator("#gd-online-launcher,#gd-online-panel").count()) throw new Error("A separate online overlay must not replace Cadence's native menus");
       if(await page.evaluate(() => window.CADENCE_RELAY) !== "/relay") throw new Error("Cadence native protocol is not pointed at the same-origin relay");
       await page.locator("canvas").first().waitFor({state:"visible",timeout:15000});
+      if (viewport.width <= 760) {
+        const responsive = await page.evaluate(() => ({
+          mobileCss: [...document.styleSheets].some(sheet => sheet.href && sheet.href.includes("/web-enhancements/mobile.css")),
+          viewport: document.querySelector('meta[name="viewport"]')?.content || "",
+          bodyOverflow: getComputedStyle(document.body).overflow
+        }));
+        if (!responsive.mobileCss) throw new Error("Responsive mobile stylesheet was not loaded");
+        if (!responsive.viewport.includes("width=device-width")) throw new Error("Mobile viewport meta tag is missing");
+        if (responsive.bodyOverflow !== "hidden") throw new Error("Mobile page should not scroll around the game canvas");
+      }
       if (viewport.width < 500) {
         await page.waitForFunction(() => window.__cadenceTouchBridgeReady === true, null, {timeout:10000});
         await page.evaluate(() => {
