@@ -31,6 +31,7 @@ try {
         return button && !button.disabled;
       },null,{timeout:60000});
       if(await page.locator("#gd-online-launcher,#gd-online-panel").count()) throw new Error("A separate online overlay must not replace Cadence's native menus");
+      if(await page.evaluate(() => window.CADENCE_RELAY) !== "/relay") throw new Error("Cadence native protocol is not pointed at the same-origin relay");
       await page.locator("#play").click();
       await page.waitForSelector("body.playing",{timeout:60000});
       await page.locator("canvas").first().waitFor({state:"visible",timeout:15000});
