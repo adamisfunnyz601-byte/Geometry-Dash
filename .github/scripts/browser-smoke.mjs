@@ -35,8 +35,8 @@ try {
         await page.evaluate(() => {
           const canvas = document.querySelector("canvas");
           window.__cadenceTouchEvents = 0;
-          canvas.addEventListener("mousedown", () => window.__cadenceTouchEvents++);
-          canvas.addEventListener("mouseup", () => window.__cadenceTouchEvents++);
+          canvas.addEventListener("pointerdown", event => { if (event.pointerType === "touch") window.__cadenceTouchEvents++; });
+          canvas.addEventListener("pointerup", event => { if (event.pointerType === "touch") window.__cadenceTouchEvents++; });
         });
         const bounds = await page.locator("canvas").first().boundingBox();
         await page.touchscreen.tap(Math.round(bounds.x + bounds.width/2), Math.round(bounds.y + bounds.height/2));
