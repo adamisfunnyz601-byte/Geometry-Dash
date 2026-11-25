@@ -106,13 +106,10 @@ jobs:
         timeout-minutes: 25
         run: |
           set -euo pipefail
-          git clone --depth 1 https://github.com/definitelynotguru/mf-dl.git "$RUNNER_TEMP/mf-dl"
-          python3 -m venv "$RUNNER_TEMP/mf-venv"
-          "$RUNNER_TEMP/mf-venv/bin/pip" install requests
-          printf '%s\\n' 'https://www.mediafire.com/file/rtsqfba3veok2c2/Resources.zip/file' > "$RUNNER_TEMP/mediafire-links.txt"
-          "$RUNNER_TEMP/mf-venv/bin/python" "$RUNNER_TEMP/mf-dl/mfdl.py" "$RUNNER_TEMP/mediafire-downloads" "$RUNNER_TEMP/mediafire-links.txt"
-          ZIP_FILE="$(find "$RUNNER_TEMP/mediafire-downloads" -type f -name 'Resources.zip' -print -quit)"
-          test -n "$ZIP_FILE"
+          RESOURCES_URL="https://github.com/adamisfunnyz601-byte/Geometry-Dash/releases/download/Dih/Resources.zip"
+          ZIP_FILE="$RUNNER_TEMP/Resources.zip"
+          curl --fail --location --retry 3 --retry-delay 2 "$RESOURCES_URL" --output "$ZIP_FILE"
+          echo "4bf5afa266a9121ecf3d8b082d7189fe24492ff075c91bcdbdddbc4e990789ed  $ZIP_FILE" | sha256sum --check
           unzip -tq "$ZIP_FILE"
           mkdir -p "$RUNNER_TEMP/resources-unpacked"
           unzip -q "$ZIP_FILE" -d "$RUNNER_TEMP/resources-unpacked"
