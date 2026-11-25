@@ -1,0 +1,1 @@
+See the complete updated backend bundle linked in the assistant response. The regression test verifies authenticated score synchronization writes user coins and profile totals to both existing database stores.
