@@ -29,8 +29,15 @@ routing keeps browser requests simple and avoids exposing backend topology.
 ## Routes
 
 - `/api/*` — Express REST API (accounts, profiles, game, levels, social, leaderboards)
-- `/relay/*` — Cadence protocol relay paths
-- `/database/*` — Cadence protocol paths
+- `/relay/database/*` — Cadence's native form-encoded account, level, profile, and social protocol
+- `/relay/post` — Cadence cloud-save backup/restore relay
+- `/database/*` — direct Cadence protocol path (also routed through the Worker)
+
+The browser build already contains Cadence's own canvas-rendered main menu, online level
+search/browser, level detail/download flow, login/register screens, and player profiles.
+Those are implemented in the Rust game UI; the Worker forwards their existing protocol
+requests to the independent Enzonic service. The separate website REST dashboard is not
+injected into the game and is not used as a replacement menu.
 
 This repository does not contain your Enzonic service origin or Cloudflare
 account configuration. Deployment must be completed in the connected Cloudflare
