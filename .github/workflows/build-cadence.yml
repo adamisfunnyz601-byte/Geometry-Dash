@@ -41,6 +41,41 @@ jobs:
                   print("MISSING")
           PY
 
+      - name: Study native Cadence menus, levels, and player data
+        working-directory: ${{ runner.temp }}/cadence-source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path(".")
+          exts = {".rs", ".js", ".ts", ".html", ".css", ".json", ".toml"}
+          files = [p for p in root.rglob("*") if p.is_file() and p.suffix in exts and not any(x in p.parts for x in ("target", "node_modules", ".git"))]
+          print("===== SOURCE FILE MAP: MENU / LEVEL / PLAYER / ACCOUNT =====")
+          for p in files:
+              if re.search(r"menu|level|player|profile|account|user|save|leader|community", str(p), re.I):
+                  print(f"{p} ({p.stat().st_size} bytes)")
+          patterns = re.compile(r"community|level.?select|main.?menu|menu.?screen|struct .*Level|enum .*Level|fn .*level|struct .*Player|struct .*User|FileStore|level.?list|level.?data|account|profile", re.I)
+          print("\\n===== NATIVE IMPLEMENTATION MATCHES (context excerpts) =====")
+          count = 0
+          for p in files:
+              if p.suffix not in {".rs", ".js", ".ts", ".html"}:
+                  continue
+              try: lines = p.read_text(errors="replace").splitlines()
+              except Exception: continue
+              hits = [i for i, line in enumerate(lines) if patterns.search(line)]
+              if not hits: continue
+              print(f"\\n--- {p} ({len(hits)} matches) ---")
+              chosen = set()
+              for i in hits[:12]:
+                  chosen.update(range(max(0, i-2), min(len(lines), i+3)))
+              for i in sorted(chosen):
+                  print(f"{i+1}: {lines[i][:240]}")
+                  count += 1
+                  if count >= 260: break
+              if count >= 260: break
+          print(f"\\nStudy complete: scanned {len(files)} source files; emitted {count} context lines.")
+          PY
+
       - name: Install Rust and WebAssembly target
         uses: dtolnay/rust-toolchain@stable
         with:
