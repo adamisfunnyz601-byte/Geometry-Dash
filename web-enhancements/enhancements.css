@@ -11,3 +11,4 @@
 body.cadence-autoload #start{display:none!important}
 body.cadence-autoload{overflow:hidden;background:#000}
 #gd-online-launcher,#gd-online-panel{display:none!important}
+canvas{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
