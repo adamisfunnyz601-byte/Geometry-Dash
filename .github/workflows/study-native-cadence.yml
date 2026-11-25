@@ -1,0 +1,55 @@
+name: Study Cadence native UI source
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'Enzonic-Geometry-Dash-Full-Frontend-Source.zip'
+      - '.github/workflows/study-native-cadence.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-native-ui:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Extract frontend source
+        run: |
+          mkdir -p "$RUNNER_TEMP/cadence-source"
+          unzip -q Enzonic-Geometry-Dash-Full-Frontend-Source.zip -d "$RUNNER_TEMP/cadence-source"
+      - name: Map and inspect native UI, levels, and player state
+        working-directory: ${{ runner.temp }}/cadence-source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path(".")
+          files = [p for p in root.rglob("*.rs") if p.is_file() and not any(x in p.parts for x in ("target", "node_modules", ".git"))]
+          print("===== RUST SOURCE TREE =====")
+          for p in files:
+              print(f"{p} ({p.stat().st_size} bytes)")
+          terms = re.compile(r"enum .*Screen|enum .*Menu|struct .*Menu|struct .*Screen|struct .*Level|enum .*Level|struct .*Player|struct .*Profile|struct .*Account|FileStore|import_level_file|level_select|level.?select|main.?menu|community|leaderboard|render.*menu|menu.*render|load_level|level_data|player_data|egui|iced|Button", re.I)
+          print("\n===== NATIVE UI AND GAME DATA CONTEXT =====")
+          emitted = 0
+          for p in files:
+              lines = p.read_text(errors="replace").splitlines()
+              hits = [i for i,line in enumerate(lines) if terms.search(line)]
+              if not hits:
+                  continue
+              print(f"\n--- {p}: {len(hits)} matching lines ---")
+              shown = set()
+              for i in hits:
+                  shown.update(range(max(0,i-3),min(len(lines),i+5)))
+              for i in sorted(shown):
+                  print(f"{i+1}: {lines[i][:300]}")
+                  emitted += 1
+                  if emitted >= 650:
+                      break
+              if emitted >= 650:
+                  break
+          print(f"\nInspected {len(files)} Rust files; emitted {emitted} context lines.")
+          PY
