@@ -144,6 +144,7 @@ jobs:
             if (check) {
               status("Game resources loaded automatically. Choose a level and press Play.");
               $("play").disabled = false;
+              window.dispatchEvent(new Event("cadence:resources-ready"));
             } else {
               status("The bundled Resources could not be loaded. Check the site deployment includes the Resources folder.", true);
             }
@@ -190,10 +191,6 @@ jobs:
           if import_line not in s:
               raise SystemExit("Cadence WASM import not found; refusing to patch an unknown entrypoint")
           s = s.replace(import_line, import_line + '\n\nawait init();\nwindow.dispatchEvent(new Event("cadence:wasm-ready"));', 1)
-          ready_line = 'status("Game resources loaded automatically. Choose a level and press Play.");\n      $("play").disabled = false;'
-          if ready_line not in s:
-              raise SystemExit("Bundled resource readiness block not found")
-          s = s.replace(ready_line, ready_line + '\n      window.dispatchEvent(new Event("cadence:resources-ready"));', 1)
           s = s.replace("</body>", '<script src="./online-menu.js" defer></script>\n</body>', 1)
           p.write_text(s)
           PY
