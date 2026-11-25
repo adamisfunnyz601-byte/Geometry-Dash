@@ -1,6 +1,6 @@
 (() => {
-  // Cadence's winit UI consumes left-mouse events in the browser build.
-  // Bridge iPad/iPhone touch input into equivalent canvas mouse events.
+  // The Cadence browser build uses winit's Pointer Events input path.
+  // Forward iOS touch contacts as PointerEvents (not MouseEvents).
   const install = () => {
     const canvas = document.querySelector("canvas");
     if (!canvas || canvas.dataset.cadenceTouchReady === "1") return !!canvas;
@@ -8,47 +8,53 @@
     canvas.style.touchAction = "none";
     canvas.style.userSelect = "none";
     canvas.style.webkitUserSelect = "none";
-    let lastTouchAt = 0;
-    const point = (touch, type, buttons) => {
-      const event = new MouseEvent(type, {
-        bubbles: true, cancelable: true, view: window,
-        clientX: touch.clientX, clientY: touch.clientY,
-        screenX: touch.screenX, screenY: touch.screenY,
-        button: 0, buttons
+    let active = false;
+    const pointer = (touch, type, buttons) => {
+      const event = new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        pointerType: "touch",
+        isPrimary: true,
+        width: 1,
+        height: 1,
+        pressure: buttons ? 0.5 : 0,
+        tangentialPressure: 0,
+        tiltX: 0,
+        tiltY: 0,
+        twist: 0,
+        clientX: touch.clientX,
+        clientY: touch.clientY,
+        screenX: touch.screenX,
+        screenY: touch.screenY,
+        button: buttons ? 0 : -1,
+        buttons
       });
       canvas.dispatchEvent(event);
     };
     canvas.addEventListener("touchstart", event => {
       if (!event.changedTouches.length) return;
       event.preventDefault();
-      lastTouchAt = Date.now();
-      for (const touch of event.changedTouches) point(touch, "mousedown", 1);
+      active = true;
+      for (const touch of event.changedTouches) pointer(touch, "pointerdown", 1);
     }, {passive:false});
     canvas.addEventListener("touchmove", event => {
-      if (!event.changedTouches.length) return;
+      if (!event.changedTouches.length || !active) return;
       event.preventDefault();
-      lastTouchAt = Date.now();
-      for (const touch of event.changedTouches) point(touch, "mousemove", 1);
+      for (const touch of event.changedTouches) pointer(touch, "pointermove", 1);
     }, {passive:false});
-    const release = event => {
-      if (!event.changedTouches.length) return;
+    const finish = (event, cancelled) => {
+      if (!event.changedTouches.length || !active) return;
       event.preventDefault();
-      lastTouchAt = Date.now();
       for (const touch of event.changedTouches) {
-        point(touch, "mouseup", 0);
-        point(touch, "click", 0);
+        pointer(touch, cancelled ? "pointercancel" : "pointerup", 0);
       }
+      active = false;
     };
-    canvas.addEventListener("touchend", release, {passive:false});
-    canvas.addEventListener("touchcancel", release, {passive:false});
-    // iOS may emit compatibility mouse events after touchend. Ignore those
-    // trusted events briefly so one tap never activates a menu item twice.
-    window.addEventListener("mousedown", event => {
-      if (event.isTrusted && Date.now() - lastTouchAt < 800) event.stopImmediatePropagation();
-    }, true);
-    window.addEventListener("mouseup", event => {
-      if (event.isTrusted && Date.now() - lastTouchAt < 800) event.stopImmediatePropagation();
-    }, true);
+    canvas.addEventListener("touchend", event => finish(event, false), {passive:false});
+    canvas.addEventListener("touchcancel", event => finish(event, true), {passive:false});
+    // Do not synthesize click/mouse events: winit consumes PointerEvents and
+    // browsers may also emit compatibility mouse events after a touch.
     window.__cadenceTouchBridgeReady = true;
     return true;
   };
