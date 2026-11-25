@@ -155,6 +155,10 @@ jobs:
           s = s.replace('Drop the Geometry Dash folder here, or choose it.', 'Game files are bundled with this website and load automatically.')
           s = s.replace('Steam on Mac: right-click Geometry Dash in your library, Manage, Browse local files, then drop the app. On Windows, drop the Geometry Dash folder.', 'No folder selection is needed.')
           s = s.replace('<button type="button" id="pick">Choose folder</button>', '<button type="button" id="pick" hidden>Choose folder</button>')
+          # Keep the existing Cadence canvas UI as the only account/community interface.
+          native_ui_style = '<style id="cadence-native-ui-only">#community,#account,.site-nav .nav-links{display:none!important}</style>'
+          if 'id="cadence-native-ui-only"' not in s:
+              s = s.replace("</head>", native_ui_style + "\\n</head>", 1)
           p.write_text(s)
           PY
 
