@@ -21,6 +21,31 @@ jobs:
         run: |
           mkdir -p "$RUNNER_TEMP/cadence-source"
           unzip -q Enzonic-Geometry-Dash-Full-Frontend-Source.zip -d "$RUNNER_TEMP/cadence-source"
+      - name: Inspect protocol wiring and native menu transitions
+        working-directory: ${{ runner.temp }}/cadence-source
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          root=Path("cadence-main/crates/cadence-game/src")
+          files=["net.rs","gjapi.rs","online.rs","ui/login.rs","ui/register.rs","ui/menu.rs","ui/levels.rs","ui/online.rs","web.rs"]
+          patterns=re.compile(r"URL|https?://|database/|relay/|endpoint|request|post\(|get\(|download_info|downloadGJLevel|uploadGJLevel|open_list|pub fn|fn draw|View::|Btn::Online|OnlineLevel|LevelInfo|login|register|account|token|levelString|level_id",re.I)
+          for name in files:
+              p=root/name
+              if not p.exists(): continue
+              lines=p.read_text(errors="replace").splitlines()
+              print(f"\n===== {name} ({len(lines)} lines) =====")
+              if name=="net.rs":
+                  chosen=range(len(lines))
+              else:
+                  hits=[i for i,line in enumerate(lines) if patterns.search(line)]
+                  selected=set()
+                  for i in hits:
+                      selected.update(range(max(0,i-2),min(len(lines),i+4)))
+                  chosen=sorted(selected)
+              for i in chosen:
+                  print(f"{i+1}: {lines[i][:280]}")
+          PY
       - name: Map and inspect native UI, levels, and player state
         working-directory: ${{ runner.temp }}/cadence-source
         run: |
