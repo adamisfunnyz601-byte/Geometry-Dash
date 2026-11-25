@@ -25,18 +25,13 @@ try {
         return route.fulfill({status:200,contentType:"application/json",body:'{"ok":true}'});
       });
       await page.goto("http://127.0.0.1:4173/",{waitUntil:"domcontentloaded"});
-      await page.locator("#play").waitFor({state:"visible",timeout:15000});
-      await page.waitForFunction(() => {
-        const button=document.querySelector("#play");
-        return button && !button.disabled;
-      },null,{timeout:60000});
+      await page.locator("#gd-loading").waitFor({state:"visible",timeout:15000});
+      await page.waitForFunction(() => document.body.classList.contains("playing") && !!document.querySelector("canvas"),null,{timeout:60000});
       if(await page.locator("#gd-online-launcher,#gd-online-panel").count()) throw new Error("A separate online overlay must not replace Cadence's native menus");
       if(await page.evaluate(() => window.CADENCE_RELAY) !== "/relay") throw new Error("Cadence native protocol is not pointed at the same-origin relay");
-      await page.locator("#play").click();
-      await page.waitForSelector("body.playing",{timeout:60000});
       await page.locator("canvas").first().waitFor({state:"visible",timeout:15000});
       if(pageErrors.length) throw new Error("Browser page errors: "+pageErrors.join(" | "));
-      console.log("PASS viewport "+viewport.width+"x"+viewport.height+": bundled Resources, native Cadence start flow, WASM canvas, no separate online overlay");
+      console.log("PASS viewport "+viewport.width+"x"+viewport.height+": bundled Resources, automatic startup loader, native Cadence main menu, WASM canvas, no separate online overlay");
       await page.close();
     }
   } finally { await browser.close(); }
