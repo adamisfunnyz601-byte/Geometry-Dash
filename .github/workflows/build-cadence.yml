@@ -161,8 +161,11 @@ jobs:
           (Path("site-artifact/web-enhancements")).mkdir(parents=True, exist_ok=True)
           Path("site-artifact/web-enhancements/loader.js").write_text(Path("web-enhancements/loader.js").read_text())
           Path("site-artifact/web-enhancements/enhancements.css").write_text(Path("web-enhancements/enhancements.css").read_text())
+          Path("site-artifact/web-enhancements/mobile.css").write_text(Path("web-enhancements/mobile.css").read_text())
           Path("site-artifact/web-enhancements/touch.js").write_text(Path("web-enhancements/touch.js").read_text())
-          s = s.replace("</head>", '<link rel="stylesheet" href="/web-enhancements/enhancements.css">\\n</head>', 1)
+          if 'name="viewport"' not in s.lower():
+              s = s.replace("<head>", '<head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">', 1)
+          s = s.replace("</head>", '<link rel="stylesheet" href="/web-enhancements/enhancements.css"><link rel="stylesheet" href="/web-enhancements/mobile.css">\\n</head>', 1)
           s = s.replace("</body>", '<script defer src="/web-enhancements/touch.js"></script>\\n</body>', 1)
           loader_markup = """<div id="gd-loading" role="status" aria-live="polite"><div class="gd-loading-inner"><div class="gd-loading-spinner" aria-hidden="true"></div><div class="gd-loading-message">Loading GD.</div><div class="gd-loading-percent">3%</div><div class="gd-loading-track"><div class="gd-loading-fill"></div></div></div></div><script defer src="/web-enhancements/loader.js"></script>"""
           s = s.replace("<body>", '<body class="cadence-autoload">\\n' + loader_markup, 1)
