@@ -17,7 +17,7 @@ try {
       const pageErrors=[];
       page.on("pageerror",e=>pageErrors.push(e.message));
       await page.route("**/api/**", route => {
-        const url=new URL(route.request().url);
+        const url=new URL(route.request().url());
         if(url.pathname==="/api/levels") return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({levels:[{id:7,name:"Browser smoke level",creator:"Test Player",average_rating:"4.50"}]})});
         if(url.pathname==="/api/leaderboards") return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({entries:[{rank:1,username:"Test Player",stars:123,demons:2,diamonds:50}]})});
         if(url.pathname==="/api/profiles/Test%20Player" || url.pathname==="/api/profiles/Test%20Player") return route.fulfill({status:200,contentType:"application/json",body:JSON.stringify({user:{username:"Test Player"},profile:{bio:"Smoke test"},stats:{stars:123,demons:2,diamonds:50},levelCount:1})});
