@@ -44,7 +44,7 @@ jobs:
       - name: Study native Cadence menus, levels, and player data
         working-directory: ${{ runner.temp }}/cadence-source
         run: |
-          python3 - <<'PY'
+          python3 - <<'PY' | tee "$RUNNER_TEMP/native-integration-study.txt"
           from pathlib import Path
           import re
           root = Path(".")
@@ -159,47 +159,17 @@ jobs:
           PY
 
 
-      - name: Add real loading screen and Cadence online menu
-        run: |
-          set -euo pipefail
-          cp web-enhancements/loader.js web-enhancements/enhancements.css web-enhancements/online-menu.js site-artifact/
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("site-artifact/index.html")
-          s = p.read_text()
-          if "</head>" not in s or "<body>" not in s or "</body>" not in s:
-              raise SystemExit("Unexpected Cadence HTML structure")
-          head = '''
-          <link rel="stylesheet" href="./enhancements.css">
-          <script src="./loader.js" defer></script>
-          <style>#community,#account,.site-nav .nav-links{display:none!important}</style>
-          '''
-          s = s.replace("</head>", head + "\n</head>", 1)
-          loader = '''
-          <div id="gd-loading" role="status" aria-live="polite" aria-label="Loading Cadence">
-            <div class="gd-loading-inner">
-              <div class="gd-loading-message">Loading<span class="gd-loading-dots">...</span></div>
-              <div class="gd-loading-track" role="progressbar" aria-label="Game loading progress" aria-valuemin="0" aria-valuemax="100">
-                <div class="gd-loading-fill"></div>
-              </div>
-              <div class="gd-loading-percent">0%</div>
-            </div>
-          </div>
-          '''
-          s = s.replace("<body>", "<body>\n" + loader, 1)
-          import_line = 'import init, { FileStore, needed_files, start, level_song, death_effect, import_level_file, sfx_pitch_shift } from "./pkg/cadence_game.js";'
-          if import_line not in s:
-              raise SystemExit("Cadence WASM import not found; refusing to patch an unknown entrypoint")
-          s = s.replace(import_line, import_line + '\n\nawait init();\nwindow.dispatchEvent(new Event("cadence:wasm-ready"));', 1)
-          s = s.replace("</body>", '<script src="./online-menu.js" defer></script>\n</body>', 1)
-          p.write_text(s)
-          PY
-
       - name: Run desktop and mobile browser smoke tests
         run: |
           npm install --no-save playwright
           npx playwright install --with-deps chromium
           node .github/scripts/browser-smoke.mjs
+
+      - name: Upload native integration source study
+        uses: actions/upload-artifact@v4
+        with:
+          name: cadence-native-integration-study
+          path: study-artifact/
 
       - name: Upload playable website
         uses: actions/upload-artifact@v4
