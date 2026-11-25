@@ -25,20 +25,17 @@ try {
         return route.fulfill({status:200,contentType:"application/json",body:'{"ok":true}'});
       });
       await page.goto("http://127.0.0.1:4173/",{waitUntil:"domcontentloaded"});
-      await page.locator("#gd-loading").waitFor({state:"visible",timeout:10000});
+      await page.locator("#play").waitFor({state:"visible",timeout:15000});
+      await page.waitForFunction(() => {
+        const button=document.querySelector("#play");
+        return button && !button.disabled;
+      },null,{timeout:60000});
+      if(await page.locator("#gd-online-launcher,#gd-online-panel").count()) throw new Error("A separate online overlay must not replace Cadence's native menus");
+      await page.locator("#play").click();
       await page.waitForSelector("body.playing",{timeout:60000});
       await page.locator("canvas").first().waitFor({state:"visible",timeout:15000});
-      await page.locator("#gd-online-launcher").click();
-      await page.locator("#gd-online-panel.open").waitFor({state:"visible"});
-      await page.getByText("Browser smoke level").waitFor({state:"visible",timeout:10000});
-      await page.locator('[data-tab="rankings"]').click();
-      await page.getByText("Test Player").first().waitFor({state:"visible"});
-      await page.locator('[data-tab="account"]').click();
-      await page.getByText("Create account").waitFor({state:"visible"});
-      const panelBox=await page.locator("#gd-online-panel").boundingBox();
-      if(!panelBox || panelBox.width>viewport.width+1) throw new Error("Online menu overflows viewport "+JSON.stringify(viewport));
       if(pageErrors.length) throw new Error("Browser page errors: "+pageErrors.join(" | "));
-      console.log("PASS viewport "+viewport.width+"x"+viewport.height+": loader, WASM game start, online menu, level search, leaderboard, account panel");
+      console.log("PASS viewport "+viewport.width+"x"+viewport.height+": bundled Resources, native Cadence start flow, WASM canvas, no separate online overlay");
       await page.close();
     }
   } finally { await browser.close(); }
