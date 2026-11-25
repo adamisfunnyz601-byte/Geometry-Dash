@@ -158,7 +158,7 @@ jobs:
           # Keep the existing Cadence canvas UI as the only account/community interface.
           native_ui_style = '<style id="cadence-native-ui-only">#community,#account,.site-nav .nav-links{display:none!important}</style>'
           if 'id="cadence-native-ui-only"' not in s:
-              s = s.replace("</head>", native_ui_style + "\\n</head>", 1)
+              s = s.replace("</head>", native_ui_style + "\n</head>", 1)
           p.write_text(s)
           PY
 
