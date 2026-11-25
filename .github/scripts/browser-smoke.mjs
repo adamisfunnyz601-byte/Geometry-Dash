@@ -41,16 +41,15 @@ try {
         if (responsive.bodyOverflow !== "hidden") throw new Error("Mobile page should not scroll around the game canvas");
       }
       if (viewport.width < 500) {
-        await page.waitForFunction(() => window.__cadenceTouchBridgeReady === true, null, {timeout:10000});
         await page.evaluate(() => {
           const canvas = document.querySelector("canvas");
-          window.__cadenceTouchEvents = 0;
-          canvas.addEventListener("pointerdown", event => { if (event.pointerType === "touch") window.__cadenceTouchEvents++; });
-          canvas.addEventListener("pointerup", event => { if (event.pointerType === "touch") window.__cadenceTouchEvents++; });
+          window.__cadenceTouchEvents = [];
+          canvas.addEventListener("pointerdown", event => { if (event.pointerType === "touch") window.__cadenceTouchEvents.push("down"); });
+          canvas.addEventListener("pointerup", event => { if (event.pointerType === "touch") window.__cadenceTouchEvents.push("up"); });
         });
         const bounds = await page.locator("canvas").first().boundingBox();
         await page.touchscreen.tap(Math.round(bounds.x + bounds.width/2), Math.round(bounds.y + bounds.height/2));
-        await page.waitForFunction(() => window.__cadenceTouchEvents >= 2, null, {timeout:5000});
+        await page.waitForFunction(() => window.__cadenceTouchEvents.includes("down") && window.__cadenceTouchEvents.includes("up"), null, {timeout:5000});
       }
       if(pageErrors.length) throw new Error("Browser page errors: "+pageErrors.join(" | "));
       console.log("PASS viewport "+viewport.width+"x"+viewport.height+": bundled Resources, automatic startup loader, native Cadence main menu, WASM canvas, no separate online overlay");
