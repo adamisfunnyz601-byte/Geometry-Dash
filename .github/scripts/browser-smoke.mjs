@@ -13,7 +13,7 @@ try {
   const browser = await chromium.launch({headless:true});
   try {
     for (const viewport of [{width:1280,height:800},{width:390,height:844}]) {
-      const page = await browser.newPage({viewport});
+      const page = await browser.newPage({viewport, hasTouch: viewport.width < 500, isMobile: viewport.width < 500});
       const pageErrors=[];
       page.on("pageerror",e=>pageErrors.push(e.message));
       await page.route("**/api/**", route => {
@@ -30,6 +30,18 @@ try {
       if(await page.locator("#gd-online-launcher,#gd-online-panel").count()) throw new Error("A separate online overlay must not replace Cadence's native menus");
       if(await page.evaluate(() => window.CADENCE_RELAY) !== "/relay") throw new Error("Cadence native protocol is not pointed at the same-origin relay");
       await page.locator("canvas").first().waitFor({state:"visible",timeout:15000});
+      if (viewport.width < 500) {
+        await page.waitForFunction(() => window.__cadenceTouchBridgeReady === true, null, {timeout:10000});
+        await page.evaluate(() => {
+          const canvas = document.querySelector("canvas");
+          window.__cadenceTouchEvents = 0;
+          canvas.addEventListener("mousedown", () => window.__cadenceTouchEvents++);
+          canvas.addEventListener("mouseup", () => window.__cadenceTouchEvents++);
+        });
+        const bounds = await page.locator("canvas").first().boundingBox();
+        await page.touchscreen.tap(Math.round(bounds.x + bounds.width/2), Math.round(bounds.y + bounds.height/2));
+        await page.waitForFunction(() => window.__cadenceTouchEvents >= 2, null, {timeout:5000});
+      }
       if(pageErrors.length) throw new Error("Browser page errors: "+pageErrors.join(" | "));
       console.log("PASS viewport "+viewport.width+"x"+viewport.height+": bundled Resources, automatic startup loader, native Cadence main menu, WASM canvas, no separate online overlay");
       await page.close();
